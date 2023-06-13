@@ -5,8 +5,8 @@ def main():
     parser.add_argument('output_file', action='store')
     args = parser.parse_args()
     from .grammar import rules
-    from tree_sitter_apertium import CG
+    from tree_sitter_apertium import RTX
     from code2text.translate import translate
     with open(args.input_file, 'rb') as fin:
         with open(args.output_file, 'w') as fout:
-            fout.write(translate(rules, CG, fin.read()))
+            fout.write(translate(rules, RTX, fin.read()))
