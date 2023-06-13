@@ -7,7 +7,7 @@ base_rules = [
         'pattern': '(source_file (_) @thing_list) @root',
         'output': [
             {
-                'lists': {'thing_list': {'join': '\n'}},
+                'lists': {'thing_list': {'join': '\n', 'html_type': 'p'}},
                 'output': '{thing_list}'
             }
         ]
@@ -50,7 +50,6 @@ base_rules = [
         'output': 'When outputting {pos_text}, just copy the tags from the input.',
     },
     {
-        # TODO: this doesn't capture in order?
         'pattern': '(output_rule pos: (ident) @pos_text [(ident) (lit_tag)] @tag_list) @root',
         'output': [{
             'lists': {'tag_list': {'join': ', '}},
@@ -80,7 +79,7 @@ base_rules = [
     {
         'pattern': '(reduce_rule_group . (ident) @pos_text . (arrow) (reduce_rule) @rule_list) @root',
         'output': [{
-            'lists': {'rule_list': {'join': '\n'}},
+            'lists': {'rule_list': {'join': '\n', 'html_type': 'ul'}},
             'output': '{pos_text} phrases can be constructed according to the following rules:\n{rule_list}'
         }],
     },
