@@ -80,7 +80,7 @@ base_rules = [
         }],
     },
     {
-        'pattern': '(output_rule (ident) @root (#match? @root "^_$"))',
+        'pattern': '(output_rule (ident) @root (#eq? @root "_"))',
         'output': 'the part of speech tag',
     },
     {
