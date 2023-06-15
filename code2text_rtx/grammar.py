@@ -36,27 +36,27 @@ base_rules = [
     {
         'pattern': '''
 (attr_rule
-  name: (ident) @name_text
-  (attr_default src: (ident) @src_text trg: (_) @trg_text)
+  name: (ident) @name
+  (attr_default src: (ident) @src trg: (_) @trg_text)
   [(ident) (string) (attr_set_insert)] @tag_list
 ) @root''',
         'output': [
             {
                 'lists': {'tag_list': {'join': ', '}},
-                'output': 'Define the tag category {name_text} as consisting of {tag_list}, and if this category is not present, then insert {src_text} while parsing and replace it with {trg_text} when outputting.',
+                'output': 'Define the tag category {name} as consisting of {tag_list}, and if this category is not present, then insert {src} while parsing and replace it with {trg_text} when outputting.',
             }
         ],
     },
     {
         'pattern': '''
 (attr_rule
-  name: (ident) @name_text
+  name: (ident) @name
   [(ident) (string) (attr_set_insert)] @tag_list
 ) @root''',
         'output': [
             {
                 'lists': {'tag_list': {'join': ', '}},
-                'output': 'Define the list {name_text} as consisting of {tag_list}.',
+                'output': 'Define the list {name} as consisting of {tag_list}.',
             }
         ],
     },
@@ -69,14 +69,14 @@ base_rules = [
         'output': 'all the tags in {set_text}',
     },
     {
-        'pattern': '(output_rule pos: (ident) @pos_text (magic)) @root',
-        'output': 'When outputting {pos_text}, just copy the tags from the input.',
+        'pattern': '(output_rule pos: (ident) @pos (magic)) @root',
+        'output': 'When outputting {pos}, just copy the tags from the input.',
     },
     {
-        'pattern': '(output_rule pos: (ident) @pos_text [(ident) (lit_tag)] @tag_list) @root',
+        'pattern': '(output_rule pos: (ident) @pos [(ident) (lit_tag)] @tag_list) @root',
         'output': [{
             'lists': {'tag_list': {'join': ', '}},
-            'output': 'When outputting {pos_text}, put the following: {tag_list}.',
+            'output': 'When outputting {pos}, put the following: {tag_list}.',
         }],
     },
     {
@@ -84,28 +84,28 @@ base_rules = [
         'output': 'the part of speech tag',
     },
     {
-        'pattern': '(output_rule (lit_tag (ident) @tag_text) @root)',
-        'output': 'the literal tag {tag_text}',
+        'pattern': '(output_rule (lit_tag (ident) @tag) @root)',
+        'output': 'the literal tag {tag}',
     },
     {
-        'pattern': '(output_rule (ident) @root_text)',
+        'pattern': '(output_rule pos: (ident) (ident) @root_text)',
         'output': 'the {root_text} tag',
     },
     {
         'pattern': '''
 (output_rule
-  pos: (ident) @pos_text
+  pos: (ident) @pos
   (lu_cond . (choice (always_tok) value: (_) @val) .)
 ) @root''',
-        'output': 'When outputting {pos_text}, put {val}.',
+        'output': 'When outputting {pos}, put {val}.',
     },
     {
         'pattern': '''
-(output_rule pos: (ident) @pos_text (lu_cond (choice) @op_list)) @root
+(output_rule pos: (ident) @pos (lu_cond (choice) @op_list)) @root
         ''',
         'output': [{
             'lists': {'op_list': {'join': '\n', 'html_type': 'ol'}},
-            'output': 'When outputting {pos_text}, use the first applicable rule from:\n{op_list}',
+            'output': 'When outputting {pos}, use the first applicable rule from:\n{op_list}',
         }],
     },
     {
@@ -186,14 +186,10 @@ base_rules = [
     },
     {'pattern': '(str_op_contains) @root', 'output': 'contains'},
     {
-        'pattern': '(attr_rule (ident) @root_text)',
-        'output': '{root_text}',
-    },
-    {
-        'pattern': '(reduce_rule_group . (ident) @pos_text . (arrow) (reduce_rule) @rule_list) @root',
+        'pattern': '(reduce_rule_group . (ident) @pos . (arrow) (reduce_rule) @rule_list) @root',
         'output': [{
             'lists': {'rule_list': {'join': '\n', 'html_type': 'ul'}},
-            'output': '{pos_text} phrases can be constructed according to the following rules:\n{rule_list}'
+            'output': '{pos} phrases can be constructed according to the following rules:\n{rule_list}'
         }],
     },
     {
@@ -230,14 +226,14 @@ base_rules = [
 (pattern_element
   (magic)? @magic
   lemma: [(ident) (string) (attr_set_insert)]? @lemma
-  . (ident) @pos_text
+  . (ident) @pos
   ("." . [(ident) (attr_set_insert) (string)] @tag_list)?
   (pattern_clip)? @set_list
 ) @root''',
         'output': multi_option(
-            (None, 'a word'),
-            ('lemma', ' with {lemma} and'),
-            (None, ' part-of-speech tag {pos_text}'),
+            (None, 'a word with'),
+            ('lemma', ' {lemma} and'),
+            (None, ' part-of-speech tag {pos}'),
             ('tag_list', ' followed by {tag_list}'),
             ('set_list', ', from which copy the tags {set_list}'),
             ('magic', ', from which copy any tag needed by the chunk which is not specified somewhere else'),
@@ -249,13 +245,13 @@ base_rules = [
         'output': 'a lemma in the list {root_text}',
     },
     {
-        'pattern': '(pattern_clip (ident) @attr_text (clip_side)? @clip) @root',
+        'pattern': '(pattern_clip (ident) @attr (clip_side)? @clip) @root',
         'output': [
             {
                 'cond': [{'has': 'clip'}],
-                'output': '{attr_text} from the {clip} side',
+                'output': '{attr} from the {clip} side',
             },
-            {'output': '{attr_text}'},
+            {'output': '{attr}'},
         ],
     },
     {
@@ -283,10 +279,10 @@ base_rules = [
         'output': 'every tag in {set_text}',
     },
     {
-        'pattern': '(retag_rule src_attr: (ident) @src_text trg_attr: (ident) @trg_text (attr_pair) @pair_list) @root',
+        'pattern': '(retag_rule src_attr: (ident) @src trg_attr: (ident) @trg (attr_pair) @pair_list) @root',
         'output': [{
             'lists': {'pair_list': {'join': ', '}},
-            'output': 'To change {src_text} to {trg_text}, change: {pair_list}.',
+            'output': 'To change {src} to {trg}, change: {pair_list}.',
         }],
     },
     {
@@ -301,13 +297,13 @@ base_rules = [
   (inserted)? @inserted
   (magic)? @magic
   (num) @pos_text
-  (macro_name (ident) @macro_text)?
+  (macro_name (ident) @macro)?
   (output_var_set)? @vars
 ) @root''',
         'output': multi_option(
             (None, 'the word in position {pos_text}'),
             ('inserted', ', if that position has been created by a parent chunk inserting a word into this chunk'),
-            ('macro_text', ', as if it had part-of-speech tag {macro_text}'),
+            ('macro', ', as if it had part-of-speech tag {macro}'),
             ('magic', ', with all tag slots which correspond to something on the chunk being filled in by copying'),
             ('conjoin', ', which should be joined to the preceding word'),
             ('insert', ', which should be made a child of the preceding chunk'),
@@ -315,8 +311,8 @@ base_rules = [
         ),
     },
     {
-        'pattern': '(set_var name: (ident) @name_text value: (_) @val) @root',
-        'output': 'set the tag {name_text} to {val}',
+        'pattern': '(set_var name: (ident) @name value: (_) @val) @root',
+        'output': 'set the tag {name} to {val}',
     },
     {
         'pattern': '(output_var_set (set_var) @set_list) @root',
@@ -326,26 +322,30 @@ base_rules = [
         }],
     },
     {
-        'pattern': '(clip val: (ident) @tag_text) @root',
-        'output': '{tag_text}',
+        'pattern': '(clip val: (ident) @tag) @root',
+        'output': '{tag}',
     },
     {
         'pattern': '''
 (clip
   (inserted)? @inserted
   pos: (num) @pos_text
-  attr: (ident) @attr_text
+  attr: (ident) @attr
   (clip_side)? @side
-  convert: (ident)? @conv_text
+  convert: (ident)? @conv
 ) @root
         ''',
         'output': multi_option(
             (None, 'the'),
             ('side', ' {side}'),
-            (None, ' {attr_text} tag of word {pos_text}'),
+            (None, ' {attr} tag of word {pos_text}'),
             ('inserted', ', if that position has been created by a parent chunk inserting a word into this chunk'),
-            ('conv_text', ', using the conversion rules to change it to a {conv_text} tag'),
+            ('conv', ', using the conversion rules to change it to a {conv} tag'),
         ),
+    },
+    {
+        'pattern': '(ident) @root_text',
+        'output': '{root_text}',
     },
 ]
 
