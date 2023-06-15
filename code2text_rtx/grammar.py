@@ -137,9 +137,54 @@ base_rules = [
     },
     {
         # TODO: more specific
-        'pattern': '(str_op) @root_text',
-        'output': '{root_text}',
+        'pattern': '(str_op (_) @op) @root',
+        'output': '{op}',
     },
+    {
+        # c -> Cl/Caseless, f -> Fold(case)
+        'pattern': '((str_op_eq) @root (#match? @root ".*[cCfF].*"))',
+        'output': 'equals (ignoring capitalization)',
+    },
+    {'pattern': '(str_op_eq) @root', 'output': '='},
+    {
+        # c -> Cl/Caseless, d -> folD(case)
+        'pattern': '((str_op_isprefix) @root (#match? @root ".*[cCdD].*"))',
+        'output': 'starts with (ignoring capitalization)',
+    },
+    {'pattern': '(str_op_isprefix) @root', 'output': 'starts with'},
+    {
+        # c -> Cl/Caseless, d -> folD(case)
+        'pattern': '((str_op_hasprefix) @root (#match? @root ".*[cCdD].*"))',
+        'output': 'starts with (ignoring capitalization) an element of',
+    },
+    {
+        'pattern': '(str_op_hasprefix) @root',
+        'output': 'starts with an element of'
+    },
+    {
+        # c -> Cl/Caseless, l -> foLd(case)
+        'pattern': '((str_op_issuffix) @root (#match? @root ".*[cClL].*"))',
+        'output': 'ends with (ignoring capitalization)',
+    },
+    {'pattern': '(str_op_issuffix) @root', 'output': 'ends with'},
+    {
+        # c -> Cl/Caseless, o -> fOld(case)
+        'pattern': '((str_op_hassuffix) @root (#match? @root ".*[cCoO].*"))',
+        'output': 'ends with (ignoring capitalization) an element of',
+    },
+    {'pattern': '(str_op_hassuffix) @root', 'output': 'ends with an element of'},
+    {
+        # c -> Cl/Caseless, f -> Fold(case)
+        'pattern': '((str_op_in) @root (#match? @root ".*[cCfF].*"))',
+        'output': 'is (ignoring capitalization) an element of',
+    },
+    {'pattern': '(str_op_in) @root', 'output': 'is an element of'},
+    {
+        # l -> cL/caseLess, f -> Fold(case)
+        'pattern': '((str_op_contains) @root (#match? @root ".*[lLfF].*"))',
+        'output': 'contains (ignoring capitalization)',
+    },
+    {'pattern': '(str_op_contains) @root', 'output': 'contains'},
     {
         'pattern': '(attr_rule (ident) @root_text)',
         'output': '{root_text}',
@@ -181,28 +226,49 @@ base_rules = [
         'output': 'an unknown word',
     },
     {
-        # TODO: lemmas, clip sides
         'pattern': '''
 (pattern_element
   (magic)? @magic
+  lemma: [(ident) (string) (attr_set_insert)]? @lemma
   . (ident) @pos_text
   ("." . [(ident) (attr_set_insert) (string)] @tag_list)?
-  ("$" . (ident) @set_list)?
+  (pattern_clip)? @set_list
 ) @root''',
+        'output': multi_option(
+            (None, 'a word'),
+            ('lemma', ' with {lemma} and'),
+            (None, ' part-of-speech tag {pos_text}'),
+            ('tag_list', ' followed by {tag_list}'),
+            ('set_list', ', from which copy the tags {set_list}'),
+            ('magic', ', from which copy any tag needed by the chunk which is not specified somewhere else'),
+            lists={'set_list': {'join': ', '}, 'tag_list': {'join': ', '}},
+        ),
+    },
+    {
+        'pattern': '(pattern_element (attr_prefix) . (ident) @root_text)',
+        'output': 'a lemma in the list {root_text}',
+    },
+    {
+        'pattern': '(pattern_clip (ident) @attr_text (clip_side)? @clip) @root',
         'output': [
             {
-                'cond': [{'has': 'set_list'}],
-                'lists': {'set_list': {'join': ', '}},
-                'output': 'a word with part-of-speech {pos_text}, from which copy the tags {tag_list}',
+                'cond': [{'has': 'clip'}],
+                'output': '{attr_text} from the {clip} side',
             },
-            {
-                'output': 'a word with part-of-speech {pos_text}',
-            },
+            {'output': '{attr_text}'},
         ],
     },
     {
-        'pattern': '(pattern_element (ident) @root_text)',
-        'output': '{root_text}',
+        'pattern': '((clip_side) @root (#eq? @root "/sl"))',
+        'output': 'source',
+    },
+    {
+        'pattern': '((clip_side) @root (#eq? @root "/tl"))',
+        'output': 'target',
+    },
+    {
+        'pattern': '((clip_side) @root (#eq? @root "/ref"))',
+        'output': 'reference',
     },
     {
         'pattern': '(attr_pair src: (_) @src trg: (_) @trg) @root',
