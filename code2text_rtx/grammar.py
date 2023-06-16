@@ -25,14 +25,19 @@ def multi_option(arg1, *args, lists=None):
 base_rules = [
     {'pattern': '["{" "}" (comment)] @root', 'output': ''},
     {
-        'pattern': '(source_file (_) @thing_list) @root',
+        'pattern': '''
+(source_file
+  [(attr_rule) (output_rule) (retag_rule) (reduce_rule_group)] @thing_list
+) @root''',
         'output': [
             {
-                'lists': {'thing_list': {'join': '\n', 'html_type': 'p'}},
+                'lists': {'thing_list': {'join': '\n\n', 'html_type': 'p'}},
                 'output': '{thing_list}'
             }
         ]
     },
+    # handle empty files
+    {'pattern': '(source_file) @root', 'output': ''},
     {
         'pattern': '''
 (attr_rule
@@ -115,6 +120,21 @@ base_rules = [
     {
         'pattern': '(lu_cond (choice (else_tok) value: (_) @val) @root)',
         'output': 'Otherwise, put {val}.',
+    },
+    {
+        'pattern': '(string_cond (choice) @c_list) @root',
+        'output': [{
+            'lists': {'c_list': {'join': '\n', 'html_type': 'ol'}},
+            'output': 'the first of the following that applies:\n{c_list}\n',
+        }],
+    },
+    {
+        'pattern': '(string_cond (choice cond: (_) @cond value: (_) @val) @root)',
+        'output': 'If {cond}, then {val}.',
+    },
+    {
+        'pattern': '(string_cond (choice value: (_) @val) @root)',
+        'output': 'Otherwise, {val}.',
     },
     {
         'pattern': '(condition . "(" (_) @thing_list ")" .) @root',
@@ -311,6 +331,35 @@ base_rules = [
         ),
     },
     {
+        'pattern': '''
+(output_element
+  (conjoin)? @conjoin
+  (insert)? @insert
+  (global_var_prefix)
+  (ident) @var
+) @root
+''',
+        'output': multi_option(
+            (None, 'the global variable {var}'),
+            ('conjoin', ', which should be joined to the preceding word'),
+            ('insert', ', which should be made a child of the preceding chunk'),
+        ),
+    },
+    {
+        'pattern': '''
+(output_element
+  (conjoin)? @conjoin
+  (insert)? @insert
+  (literal_lu) @lu
+) @root
+''',
+        'output': multi_option(
+            (None, '{lu}'),
+            ('conjoin', ', which should be joined to the preceding word'),
+            ('insert', ', which should be made a child of the preceding chunk'),
+        ),
+    },
+    {
         'pattern': '(set_var name: (ident) @name value: (_) @val) @root',
         'output': 'set the tag {name} to {val}',
     },
@@ -344,7 +393,77 @@ base_rules = [
         ),
     },
     {
-        'pattern': '(ident) @root_text',
+        'pattern': '''
+(clip
+  pos: (attr_prefix)
+  attr: (ident) @attr
+  (clip_side)? @side
+  convert: (ident)? @conv
+) @root
+        ''',
+        'output': multi_option(
+            (None, 'the'),
+            ('side', ' {side}'),
+            (None, ' {attr} tag of the chunk'),
+            ('conv', ', using the conversion rules to change it to a {conv} tag'),
+        ),
+    },
+    {
+        'pattern': '''
+(clip
+  (global_var_prefix)
+  var_name: (ident) @var
+  attr: (ident) @attr
+  (clip_side)? @side
+  convert: (ident)? @conv
+) @root
+        ''',
+        'output': multi_option(
+            (None, 'the'),
+            ('side', ' {side}'),
+            (None, ' {attr} tag of the global variable {var}'),
+            ('conv', ', using the conversion rules to change it to a {conv} tag'),
+        ),
+    },
+    {
+        'pattern': '''
+(literal_lu
+  lemma: (_) @lem [(ident) (clip) (string_cond)] @tag_list
+  lemcase: (clip)? @lemcase
+) @root''',
+        'output': [
+            {
+                'cond': [{'has': 'lemcase'}],
+                'lists': {'tag_list': {'join': ', '}},
+                'output': 'a word with lemma {lem} and capitalization matching {lemcase} and the following tags: {tag_list}',
+            },
+            {
+                'lists': {'tag_list': {'join': ', '}},
+                'output': 'a word with lemma {lem} and the following tags: {tag_list}',
+            }
+        ],
+    },
+    {
+        'pattern': '''
+(lu_sequence
+  [(output_element) (blank) (numbered_blank) (lu_cond) (lu_sequence)] @thing_list
+) @root
+        ''',
+        'output': [{
+            'lists': {'thing_list': {'join': ', ', 'html_type': 'ol'}},
+            'output': '{thing_list}',
+        }],
+    },
+    {
+        'pattern': '(lu_sequence) @root',
+        'output': 'nothing',
+    },
+    {
+        'pattern': '(literal_lu parent_tag: (ident) @root_text)',
+        'output': 'the {root_text} tag from the chunk',
+    },
+    {
+        'pattern': '[(ident) (string)] @root_text',
         'output': '{root_text}',
     },
 ]
